@@ -12,7 +12,7 @@
                                      Width and height are optional. Defaults are
                                      `width`: 80, `height`: 40
 
-   -l [length] : Linear (*default) - Reads the file in a linear pattern, reading only
+    -l [length] : Linear (*default) - Reads the file in a linear pattern, reading only
                                      `length` chars at a time. Use arrow keys to
                                      move in the file. Left/Up goes back in the buffer,
                                      right/down moves forward. Default is
