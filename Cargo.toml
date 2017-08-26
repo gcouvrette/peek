@@ -1,0 +1,7 @@
+[package]
+name = "peek"
+version = "0.1.0"
+authors = ["beaubbe <gabriel.couvrette@gmail.com>"]
+
+[dependencies]
+getch = "0.1.1"
