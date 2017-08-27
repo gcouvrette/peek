@@ -7,14 +7,17 @@ pub struct LinearMode {
     file: File,
     buffer: usize,
     index: u64,
+    file_size: u64,
 }
 
 impl LinearMode {
-    pub fn new(file: File, buffer: usize) -> Self {
+    pub fn new(mut file: File, buffer: usize) -> Self {
+        let file_size: u64 = (&mut file).seek(SeekFrom::End(0)).unwrap();
         LinearMode {
             file,
             buffer,
             index: 0,
+            file_size,
         }
     }
 }
@@ -31,11 +34,13 @@ impl ReadMode for LinearMode {
         match direction {
             ArrowDirection::LEFT | ArrowDirection::UP => {
                 if self.index > 0 {
-                    self.index -= 10;
+                    self.index -= 1;
                 }
             },
             ArrowDirection::RIGHT | ArrowDirection::DOWN => {
-                    self.index += 10;
+                if self.index + (self.buffer as u64) < self.file_size {
+                    self.index += 1;
+                }
             },
         };
     }
