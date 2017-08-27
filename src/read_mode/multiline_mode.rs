@@ -7,8 +7,10 @@ pub struct MultilineMode {
     file: File,
     width: usize,
     height: usize,
+    line_history: Vec<u64>,
     line_index: usize,
     char_index: usize,
+
 }
 
 impl MultilineMode {
@@ -17,6 +19,7 @@ impl MultilineMode {
             file,
             width,
             height,
+            line_history: vec![0], // The first line is at position 0.
             line_index: 0,
             char_index: 0,
         }
@@ -25,22 +28,31 @@ impl MultilineMode {
 
 impl ReadMode for MultilineMode {
     fn read(&mut self) {
-        let mut seek_total: i64 = 0;
-        { // Immutable borrow of the file in this scope;
-            let mut reader = BufReader::new(&self.file);
-            let mut buf = String::new();
-            for i in 0..self.height {
-                if let Ok(n) = reader.read_line(&mut buf) {
-                    seek_total -= n as i64;
-                }
-                println!("{}", &buf.chars().skip(self.char_index).take(self.width).collect::<String>());
-            }
-        // File borrow released here.
+        {
+            // Seek to the start of the line at line_index:
+            let seek_idx = self.line_history[self.line_index];
+            self.file.seek(SeekFrom::Start(seek_idx));
         }
-        // Mutable borrow here to seek.
-        panic!(format!("read: {}", seek_total));
-        self.file.seek(SeekFrom::Current(seek_total)); // FIXME: The buffer is reading more than seek_total, the file is not scrolling properly.
+        let mut reader = BufReader::new(&self.file);
+        for i in 1..self.height {
+            // read the line
+            let mut buf = String::new();
+            let newline_pos = reader.read_line(&mut buf).unwrap();
+            // if we are reading a new line not in the history, add it:
+            if self.line_index + i + 1 > self.line_history.len() {
+                let last_seek_idx;
+                    {last_seek_idx = self.line_history.last().unwrap().clone();}
+                self.line_history.push(last_seek_idx + (newline_pos as u64)); // Push the next line's position
+            }
+            let line_to_print = &buf.chars()
+                .skip(self.char_index) // skip the first X characters of the line
+                .take(self.width) // Only take W letters following the index
+                .filter(|c| {!String::from("\r\n").contains(*c)}) // take out any endlines
+                .collect::<String>(); // return as a new string.
+            println!("{}", line_to_print);
+        }
     }
+
     fn on_scroll(&mut self, direction: ArrowDirection) {
         match direction {
             ArrowDirection::LEFT => {
