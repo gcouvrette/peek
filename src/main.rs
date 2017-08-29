@@ -10,10 +10,9 @@ fn main() {
         });
 
     let getch = Getch::new().expect("Unable to read from console byte-by-byte.");
-    loop {
-        clear_screen();
-        read_mode.read();
 
+    read_mode.read();
+    loop {
         let key: Option<ArrowDirection> = match getch.getch().unwrap() {
             75u8 => Some(ArrowDirection::LEFT),
             72u8 => Some(ArrowDirection::UP),
@@ -24,6 +23,8 @@ fn main() {
         };
         if let Some(key) = key {
             read_mode.on_scroll(key);
+            clear_screen();
+            read_mode.read();
         }
     }
 }
